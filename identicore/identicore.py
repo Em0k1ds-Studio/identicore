@@ -1,7 +1,6 @@
 """Core package for face recognition and similarity comparison using InspireFace SDK."""
 
-from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 import cv2
 import inspireface
@@ -12,32 +11,42 @@ from numpy import (
     array,
     dot,
     dtype,
-    floating,
     ndarray,
     signedinteger,
 )
-from numpy._typing._nbit_base import _32Bit
 
 from identicore.exceptions import FeaturesExtractionFailed, MultipleFacesDetected
-
-type InspireModel = Literal['Pikachu', 'Megatron']
-type ImagePath = Union[Path, str]
-type FeaturesArray = ndarray[tuple[int], dtype[floating[_32Bit]]]
+from identicore.types import FaceComparisonResult, FaceFeaturesArray, ImagePath, InspireModel
 
 
 class IdenticoreSession:
-    """Base session for face recognition and similarity comparison using InspireFace SDK."""
+    """Base session for face recognition and similarity comparison using InspireFace SDK.
+
+    Attributes:
+        _inspire_session (`InspireFaceSession`): An instance of InspireFaceSession for face recognition operations.
+    """
 
     _inspire_session: InspireFaceSession
 
     def __init__(self, model: InspireModel) -> None:
-        """Sample."""
+        """Initializes the IdenticoreSession with a specified InspireFace model.
+
+        Args:
+            model (`InspireModel`): The name of the InspireFace model to use (e.g., 'Pikachu' or 'Megatron').
+        """
         inspireface.reload(model_name=model)
         self._inspire_session = InspireFaceSession(param=HF_ENABLE_FACE_RECOGNITION)
 
     @staticmethod
     def load_image(image_path: ImagePath) -> MatLike:
-        """Sample."""
+        """Loads an image from the specified path.
+
+        Args:
+            image_path (`ImagePath`): The path to the image file, either as a Path object or string.
+
+        Returns:
+            `MatLike`: A MatLike object representing the loaded image in OpenCV format.
+        """
         return cv2.imread(filename=str(image_path))
 
     def face_detection(
@@ -45,10 +54,24 @@ class IdenticoreSession:
         image: MatLike,
         for_identification: bool,
         threshold: float = 0.5,
-        draw_boxes: bool = True,
+        draw_boxes: bool = False,
         boxes_label: str = 'human',
     ) -> List[FaceInformation]:
-        """Sample."""
+        """Detects faces in an image with optional bounding box drawing.
+
+        Args:
+            image (`MatLike`): The input image as a MatLike object.
+            for_identification (`bool`): If True, raises an exception if multiple faces are detected.
+            threshold (`float`): Minimum detection confidence threshold (default: 0.5).
+            draw_boxes (`bool`): If True, draws bounding boxes around detected faces (default: False).
+            boxes_label (`str`): Label text for bounding boxes (default: 'human').
+
+        Returns:
+            `List[FaceInformation]`: A list of FaceInformation objects for detected faces.
+
+        Raises:
+            `MultipleFacesDetected`: If *for_identification* is True and multiple faces are detected.
+        """
         faces: List[FaceInformation] = list(
             filter(lambda x: x.detection_confidence >= threshold, self._inspire_session.face_detection(image=image))
         )
@@ -67,33 +90,74 @@ class IdenticoreSession:
         first_face: Tuple[MatLike, FaceInformation],
         second_face: Tuple[MatLike, FaceInformation],
         threshold: float = 0.7,
-    ) -> Tuple[bool, float]:
-        """Sample. Returns (bool, similarity_confidence)."""
-        first_features: Optional[FeaturesArray] = self._inspire_session.face_feature_extract(
-            image=first_face[0], face_information=first_face[1]
+    ) -> FaceComparisonResult:
+        """Compares two faces for similarity based on extracted features.
+
+        **Note**: It is assumed that the `FaceInformation` objects correspond to the provided images.
+
+        Args:
+            first_face (`Tuple[MatLike, FaceInformation]`): A tuple of (image, FaceInformation) for the first face.
+            second_face (`Tuple[MatLike, FaceInformation]`): A tuple of (image, FaceInformation) for the second face.
+            threshold (`float`): Minimum similarity threshold for a positive match (default: 0.7).
+
+        Returns:
+            `FaceComparisonResult`: An object containing
+                - is_match (`bool`): True if similarity exceeds threshold, False otherwise.
+                - similarity_confidence (`float`): The computed similarity score between 0 and 1.
+
+        Raises:
+            `FeaturesExtractionFailed`: If feature extraction fails for either face.
+        """
+        first_image, first_face_info = first_face
+        second_image, second_face_info = second_face
+
+        first_features: Optional[FaceFeaturesArray] = self._inspire_session.face_feature_extract(
+            image=first_image, face_information=first_face_info
         )
 
         if first_features is None:
-            raise FeaturesExtractionFailed(index=0)
+            raise FeaturesExtractionFailed(index=0, message='Feature extraction failed for the first face.')
 
-        second_features: Optional[FeaturesArray] = self._inspire_session.face_feature_extract(
-            image=second_face[0], face_information=second_face[1]
+        second_features: Optional[FaceFeaturesArray] = self._inspire_session.face_feature_extract(
+            image=second_image, face_information=second_face_info
         )
 
         if second_features is None:
-            raise FeaturesExtractionFailed(index=1)
+            raise FeaturesExtractionFailed(index=1, message='Feature extraction failed for the second face.')
 
         similarity_confidence: float = self._cosine_similarity(first_features, second_features)
 
-        return (similarity_confidence >= threshold, similarity_confidence)
+        return FaceComparisonResult(
+            is_match=similarity_confidence >= threshold, similarity_confidence=similarity_confidence
+        )
 
     @staticmethod
-    def _cosine_similarity(n0: FeaturesArray, n1: FeaturesArray) -> float:
-        """Cosine similarity, but it's result belongs to the interval [0;1]."""
+    def _cosine_similarity(n0: FaceFeaturesArray, n1: FaceFeaturesArray) -> float:
+        """Computes the cosine similarity between two face-feature arrays, normalized to [0, 1].
+
+        Args:
+            n0 (`FaceFeaturesArray`): First face-feature array.
+            n1 (`FaceFeaturesArray`): Second face-feature array.
+
+        Returns:
+            `float`: The cosine similarity score between 0 and 1.
+        """
         return (dot(a=n0, b=n1) / (cv2.norm(src1=n0) * cv2.norm(src1=n1)) + 1) / 2
 
     @staticmethod
     def _draw_bounding_box(image: MatLike, face: FaceInformation, label: str) -> None:
+        """Draws a bounding box and label (at the bottom of the bounding box) around a detected face on the image.
+
+        Args:
+            image (`MatLike`): The input image as a MatLike object where the box will be drawn.
+            face (`FaceInformation`): FaceInformation object containing location and detection data.
+            label (`str`): Text label to display near the bounding box.
+        """
+        BASE_SCALE_FACTOR: float = 1000.0
+        MIN_BOX_THICKNESS: int = 2
+        MIN_TEXT_THICKNESS: int = 1
+        MIN_FONT_SCALE: float = 0.5
+
         x1, y1, x2, y2 = face.location
 
         # Construct a rectangle from given upper-left & bottom-right points
@@ -111,11 +175,10 @@ class IdenticoreSession:
         img_height, img_width = image.shape[:2]
 
         # Calculate scaling factors based on image size
-        scale_factor: float = min(img_width, img_height) / 1000.0
-
-        box_thickness: int = max(2, int(2 * scale_factor))
-        text_thickness: int = max(1, int(1.3 * scale_factor))
-        font_scale: float = max(0.5, 0.7 * scale_factor)
+        scale_factor: float = min(img_width, img_height) / BASE_SCALE_FACTOR
+        box_thickness: int = max(MIN_BOX_THICKNESS, int(2 * scale_factor))
+        text_thickness: int = max(MIN_TEXT_THICKNESS, int(1.3 * scale_factor))
+        font_scale: float = max(MIN_FONT_SCALE, 0.7 * scale_factor)
 
         cv2.polylines(
             img=image,

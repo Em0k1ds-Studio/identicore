@@ -1,0 +1,25 @@
+"""Identicore-related types."""
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal, Union
+
+from numpy import dtype, floating, ndarray
+from numpy._typing._nbit_base import _32Bit
+
+type InspireModel = Literal['Pikachu', 'Megatron']
+type ImagePath = Union[Path, str]
+type FaceFeaturesArray = ndarray[tuple[int], dtype[floating[_32Bit]]]
+
+
+@dataclass
+class FaceComparisonResult:
+    """Result of a face comparison operation.
+
+    Attributes:
+        is_match (`bool`): True if the faces match based on the similarity threshold.
+        similarity_confidence (`float`): The computed similarity score between 0 and 1.
+    """
+
+    is_match: bool
+    similarity_confidence: float
