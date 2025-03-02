@@ -53,16 +53,18 @@ class IdenticoreSession:
         self,
         image: MatLike,
         for_identification: bool,
-        threshold: float = 0.5,
+        threshold: float = 0.65,
         draw_boxes: bool = False,
         boxes_label: str = 'human',
     ) -> List[FaceInformation]:
         """Detects faces in an image with optional bounding box drawing.
 
+        **Note**: For further face identification purposes it's recommended to set *threshold* at least to 0.7.
+
         Args:
             image (`MatLike`): The input image as a MatLike object.
             for_identification (`bool`): If True, raises an exception if multiple faces are detected.
-            threshold (`float`): Minimum detection confidence threshold (default: 0.5).
+            threshold (`float`): Minimum detection confidence threshold (default: 0.65).
             draw_boxes (`bool`): If True, draws bounding boxes around detected faces (default: False).
             boxes_label (`str`): Label text for bounding boxes (default: 'human').
 
