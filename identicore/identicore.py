@@ -116,14 +116,14 @@ class IdenticoreSession:
         )
 
         if first_features is None:
-            raise FeaturesExtractionFailed(index=0, message='Feature extraction failed for the first face.')
+            raise FeaturesExtractionFailed(0, 'Feature extraction failed for the first face.')
 
         second_features: Optional[FaceFeaturesArray] = self._inspire_session.face_feature_extract(
             image=second_image, face_information=second_face_info
         )
 
         if second_features is None:
-            raise FeaturesExtractionFailed(index=1, message='Feature extraction failed for the second face.')
+            raise FeaturesExtractionFailed(1, 'Feature extraction failed for the second face.')
 
         similarity_confidence: float = self._cosine_similarity(first_features, second_features)
 
