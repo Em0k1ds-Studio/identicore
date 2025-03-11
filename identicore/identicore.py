@@ -28,14 +28,15 @@ class IdenticoreSession:
 
     _inspire_session: InspireFaceSession
 
-    def __init__(self, model: InspireModel) -> None:
+    def __init__(self, model: InspireModel, inspire_flags: int = 0) -> None:
         """Initializes the IdenticoreSession with a specified InspireFace model.
 
         Args:
             model (`InspireModel`): The name of the InspireFace model to use (e.g., 'Pikachu' or 'Megatron').
+            inspire_flags (`int`): Additional InspireFaceSession flags (e.g., *HF_ENABLE_QUALITY*).
         """
         inspireface.reload(model_name=model)
-        self._inspire_session = InspireFaceSession(param=HF_ENABLE_FACE_RECOGNITION)
+        self._inspire_session = InspireFaceSession(param=HF_ENABLE_FACE_RECOGNITION | inspire_flags)
 
     @staticmethod
     def load_image(image_path: ImagePath) -> MatLike:
