@@ -91,7 +91,7 @@ class IdenticoreSession:
         self,
         first_face: Tuple[MatLike, FaceInformation],
         second_face: Tuple[MatLike, FaceInformation],
-        threshold: float = 0.7,
+        threshold: float = 0.75,
     ) -> FaceComparisonResult:
         """Compares two faces for similarity based on extracted features.
 
@@ -100,7 +100,7 @@ class IdenticoreSession:
         Args:
             first_face (`Tuple[MatLike, FaceInformation]`): A tuple of (image, FaceInformation) for the first face.
             second_face (`Tuple[MatLike, FaceInformation]`): A tuple of (image, FaceInformation) for the second face.
-            threshold (`float`): Minimum similarity threshold for a positive match (default: 0.7).
+            threshold (`float`): Minimum similarity threshold for a positive match (default: 0.75).
 
         Returns:
             `FaceComparisonResult`: An object containing
