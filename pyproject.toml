@@ -52,7 +52,7 @@ check = [
 ]
 format = [
     "ruff check --exit-zero --fix identicore tests",
-    "ruff format identicore tests",
+    "ruff format identicore tests stubs",
 ]
 
 [[tool.mypy.overrides]]
@@ -83,7 +83,7 @@ full = [
     "mypy --install-types --non-interactive {args:identicore tests}",
     "pyright {args:identicore tests}",
     "ruff check --exit-zero --fix identicore tests",
-    "ruff format identicore tests",
+    "ruff format identicore tests stubs",
     "pytest --cov=identicore --cov-report=term-missing {args:tests}",
 ]
 
