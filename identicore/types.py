@@ -7,9 +7,9 @@ from typing import Literal, Union
 from numpy import dtype, floating, ndarray
 from numpy._typing._nbit_base import _32Bit
 
-type InspireModel = Literal['Pikachu', 'Megatron']
-type ImagePath = Union[Path, str]
-type FaceFeaturesArray = ndarray[tuple[int], dtype[floating[_32Bit]]]
+InspireModel = Literal['Pikachu', 'Megatron']
+ImagePath = Union[Path, str]
+FaceFeaturesArray = ndarray[tuple[int], dtype[floating[_32Bit]]]
 
 
 @dataclass
