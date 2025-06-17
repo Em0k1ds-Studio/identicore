@@ -6,6 +6,7 @@ from cv2.typing import MatLike
 from inspireface.modules.inspireface import FaceInformation
 
 from identicore import IdenticoreSession
+from identicore.types import DefaultDrawingOpts
 
 DATASET_PATH: Path = Path(__file__).parent / 'dataset'
 
@@ -31,7 +32,9 @@ def test_positive_detection_single(session: IdenticoreSession, image_name: str) 
     assert image_path.exists(), 'Param: <DATASET_PATH / image_name> as `Path` is not exists.'
 
     image: MatLike = IdenticoreSession.load_image(image_path=image_path)
-    faces: List[FaceInformation] = session.face_detection(image=image, for_identification=False, threshold=THRESHOLD)
+    faces: List[FaceInformation] = session.face_detection(
+        image=image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=THRESHOLD
+    )
 
     assert len(faces) == 1, f'Found {len(faces)}, but expected 1.'
     assert faces[0].detection_confidence >= THRESHOLD, (
@@ -54,7 +57,9 @@ def test_positive_detection_multiple(session: IdenticoreSession, image_name: str
     assert image_path.exists(), 'Param: <DATASET_PATH / image_name> as `Path` is not exists.'
 
     image: MatLike = IdenticoreSession.load_image(image_path=image_path)
-    faces: List[FaceInformation] = session.face_detection(image=image, for_identification=False, threshold=THRESHOLD)
+    faces: List[FaceInformation] = session.face_detection(
+        image=image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=THRESHOLD
+    )
 
     assert len(faces) == expected_faces, f'Found {len(faces)}, but expected {expected_faces}.'
     assert faces[0].detection_confidence >= THRESHOLD, (
@@ -79,6 +84,7 @@ def test_negative_detection(session: IdenticoreSession, image_name: str) -> None
     image: MatLike = IdenticoreSession.load_image(image_path=image_path)
     faces: List[FaceInformation] = session.face_detection(
         image=image,
+        draw_opts=DefaultDrawingOpts,
         for_identification=False,
         threshold=IDENTIFICATION_THRESHOLD,
     )

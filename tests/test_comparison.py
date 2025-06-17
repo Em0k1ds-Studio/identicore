@@ -6,7 +6,7 @@ from cv2.typing import MatLike
 from inspireface.modules.inspireface import FaceInformation
 
 from identicore import IdenticoreSession
-from identicore.types import FaceComparisonResult
+from identicore.types import DefaultDrawingOpts, FaceComparisonResult
 
 DATASET_PATH: Path = Path(__file__).parent / 'dataset'
 
@@ -34,12 +34,12 @@ def test_positive_comparison(session: IdenticoreSession, first_image_name: str, 
 
     first_image: MatLike = IdenticoreSession.load_image(image_path=first_image_path)
     first_faces: List[FaceInformation] = session.face_detection(
-        image=first_image, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
+        image=first_image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
     )
 
     second_image: MatLike = IdenticoreSession.load_image(image_path=second_image_path)
     second_faces: List[FaceInformation] = session.face_detection(
-        image=second_image, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
+        image=second_image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
     )
 
     assert len(first_faces) == 1, f'Found {len(first_faces)}, but expected 1.'
@@ -83,12 +83,12 @@ def test_negative_comparison(session: IdenticoreSession, first_image_name: str, 
 
     first_image: MatLike = IdenticoreSession.load_image(image_path=first_image_path)
     first_faces: List[FaceInformation] = session.face_detection(
-        image=first_image, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
+        image=first_image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
     )
 
     second_image: MatLike = IdenticoreSession.load_image(image_path=second_image_path)
     second_faces: List[FaceInformation] = session.face_detection(
-        image=second_image, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
+        image=second_image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=IDENTIFICATION_THRESHOLD
     )
 
     assert len(first_faces) == 1, f'Found {len(first_faces)}, but expected 1.'

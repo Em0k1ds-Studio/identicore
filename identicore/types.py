@@ -23,3 +23,22 @@ class FaceComparisonResult:
 
     is_match: bool
     similarity_confidence: float
+
+
+@dataclass
+class DrawingOpts:
+    """Drawing options for detected faces.
+
+    Attributes:
+        draw_boxes (`bool`): Draws bounding boxes around detected faces (default: False)
+        boxes_label (`str`): Label text for bounding boxes (default: 'human')
+        draw_landmarks (`bool`): Draw face dense landmarks on detected faces (default: False)
+    """
+
+    draw_boxes: bool = False
+    boxes_label: str = 'human'
+
+    draw_landmarks: bool = False
+
+
+DefaultDrawingOpts = DrawingOpts()
