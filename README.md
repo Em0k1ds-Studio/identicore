@@ -8,17 +8,17 @@ pip install --upgrade git+https://github.com/Em0k1ds-Studio/identicore@main
 
 ## Usage
 ```python
-from identicore import IdenticoreSession
+from identicore import IdenticoreSession, DefaultDrawingOpts
 
 # Initialize session with Pikachu model
 session = IdenticoreSession(model='Pikachu')
 
 # Load and detect faces in an images
 first_image = session.load_image('path/to/first_image.jpg')
-first_faces = session.face_detection(first_image, for_identification=True)
+first_faces = session.face_detection(first_image, draw_opts=DefaultDrawingOpts, for_identification=True)
 
 second_image = session.load_image('path/to/second_image.png')
-second_faces = session.face_detection(second_image, for_identification=True)
+second_faces = session.face_detection(second_image, draw_opts=DefaultDrawingOpts, for_identification=True)
 
 # Compare two faces
 result = session.face_comparison(
