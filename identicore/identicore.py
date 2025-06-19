@@ -6,17 +6,18 @@ import cv2
 import inspireface
 from cv2.typing import MatLike
 from inspireface import HF_ENABLE_FACE_RECOGNITION, FaceInformation, InspireFaceSession
+from inspireface.modules.core.native import HF_ENABLE_DETECT_MODE_LANDMARK
 from numpy import (
-    argmax,
     array,
-    dot,
+    clip,
     dtype,
     ndarray,
-    signedinteger,
 )
 
 from identicore.exceptions import FeaturesExtractionFailed, MultipleFacesDetected
-from identicore.types import FaceComparisonResult, FaceFeaturesArray, ImagePath, InspireModel
+from identicore.types import DrawingOpts, FaceComparisonResult, FaceFeaturesArray, ImagePath, InspireModel
+
+BASE_SCALE_FACTOR: float = 1000.0
 
 
 class IdenticoreSession:
@@ -36,7 +37,9 @@ class IdenticoreSession:
             inspire_flags (`int`): Additional InspireFaceSession flags (e.g., *HF_ENABLE_QUALITY*).
         """
         inspireface.reload(model_name=model)
-        self._inspire_session = InspireFaceSession(param=HF_ENABLE_FACE_RECOGNITION | inspire_flags)
+        self._inspire_session = InspireFaceSession(
+            param=HF_ENABLE_FACE_RECOGNITION | HF_ENABLE_DETECT_MODE_LANDMARK | inspire_flags
+        )
 
     @staticmethod
     def load_image(image_path: ImagePath) -> MatLike:
@@ -53,10 +56,9 @@ class IdenticoreSession:
     def face_detection(
         self,
         image: MatLike,
+        draw_opts: DrawingOpts,
         for_identification: bool,
         threshold: float = 0.65,
-        draw_boxes: bool = False,
-        boxes_label: str = 'human',
     ) -> List[FaceInformation]:
         """Detects faces in an image with optional bounding box drawing.
 
@@ -64,10 +66,9 @@ class IdenticoreSession:
 
         Args:
             image (`MatLike`): The input image as a MatLike object.
+            draw_opts (`DrawingOpts`): Drawing options for detected faces.
             for_identification (`bool`): If True, raises an exception if multiple faces are detected.
             threshold (`float`): Minimum detection confidence threshold (default: 0.65).
-            draw_boxes (`bool`): If True, draws bounding boxes around detected faces (default: False).
-            boxes_label (`str`): Label text for bounding boxes (default: 'human').
 
         Returns:
             `List[FaceInformation]`: A list of FaceInformation objects for detected faces.
@@ -82,9 +83,12 @@ class IdenticoreSession:
         if for_identification and len(faces) > 1:
             raise MultipleFacesDetected(quantity=len(faces))
 
-        if draw_boxes:
-            for face in faces:
-                self._draw_bounding_box(image, face, boxes_label)
+        for face in faces:
+            if draw_opts.draw_boxes:
+                self._draw_bounding_box(image=image, face=face, label=draw_opts.boxes_label)
+
+            if draw_opts.draw_landmarks:
+                self._draw_landmarks(image=image, face=face)
 
         return faces
 
@@ -92,7 +96,7 @@ class IdenticoreSession:
         self,
         first_face: Tuple[MatLike, FaceInformation],
         second_face: Tuple[MatLike, FaceInformation],
-        threshold: float = 0.75,
+        threshold: float = 0.85,
     ) -> FaceComparisonResult:
         """Compares two faces for similarity based on extracted features.
 
@@ -101,7 +105,7 @@ class IdenticoreSession:
         Args:
             first_face (`Tuple[MatLike, FaceInformation]`): A tuple of (image, FaceInformation) for the first face.
             second_face (`Tuple[MatLike, FaceInformation]`): A tuple of (image, FaceInformation) for the second face.
-            threshold (`float`): Minimum similarity threshold for a positive match (default: 0.75).
+            threshold (`float`): Minimum similarity threshold for a positive match (default: 0.85).
 
         Returns:
             `FaceComparisonResult`: An object containing
@@ -145,7 +149,7 @@ class IdenticoreSession:
         Returns:
             `float`: The cosine similarity score between 0 and 1.
         """
-        return (dot(a=n0, b=n1) / (cv2.norm(src1=n0) * cv2.norm(src1=n1)) + 1) / 2
+        return clip(inspireface.feature_comparison(feature1=n0, feature2=n1) + 0.25, a_min=0.0, a_max=1.0)
 
     @staticmethod
     def _draw_bounding_box(image: MatLike, face: FaceInformation, label: str) -> None:
@@ -156,7 +160,6 @@ class IdenticoreSession:
             face (`FaceInformation`): FaceInformation object containing location and detection data.
             label (`str`): Text label to display near the bounding box.
         """
-        BASE_SCALE_FACTOR: float = 1000.0
         MIN_BOX_THICKNESS: int = 2
         MIN_TEXT_THICKNESS: int = 1
         MIN_FONT_SCALE: float = 0.5
@@ -198,9 +201,9 @@ class IdenticoreSession:
             thickness=text_thickness,
         )
 
-        # Find the bottom-most point for text placement
-        bottom_idx: signedinteger = argmax(a=rect[:, 1])
-        bottom_point: Tuple[int, int] = rect[bottom_idx]
+        # Find the bottom-left point for text placement
+        bottom_pts: ndarray[Tuple[Any], dtype[Any]] = rect[rect[:, 1] == rect[:, 1].max()]
+        left_bottom: Tuple[int, int] = bottom_pts[bottom_pts[:, 0].argmin()]
 
         # Calculate text background rectangle coordinates
         text_bg_width: int = text_width + int(10 * scale_factor)
@@ -208,8 +211,8 @@ class IdenticoreSession:
 
         cv2.rectangle(
             img=image,
-            pt1=(bottom_point[0], bottom_point[1]),
-            pt2=(bottom_point[0] + text_bg_width, bottom_point[1] + text_bg_height),
+            pt1=(left_bottom[0], left_bottom[1]),
+            pt2=(left_bottom[0] + text_bg_width, left_bottom[1] + text_bg_height),
             color=(0, 255, 0),
             thickness=-1,
         )
@@ -218,8 +221,8 @@ class IdenticoreSession:
             img=image,
             text=label,
             org=(
-                bottom_point[0] + int(5 * scale_factor),
-                bottom_point[1] + text_height + int(2 * scale_factor),
+                left_bottom[0] + int(5 * scale_factor),
+                left_bottom[1] + text_height + int(2 * scale_factor),
             ),
             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
             fontScale=font_scale,
@@ -227,3 +230,21 @@ class IdenticoreSession:
             thickness=text_thickness,
             lineType=cv2.LINE_AA,
         )
+
+    def _draw_landmarks(self, image: MatLike, face: FaceInformation) -> None:
+        # Get image dimensions
+        img_height, img_width = image.shape[:2]
+
+        # Calculate scaling factors based on image size
+        scale_factor: float = min(img_width, img_height) / BASE_SCALE_FACTOR
+
+        landmarks: ndarray[Tuple[int, int], dtype[Any]] = self._inspire_session.get_face_dense_landmark(face)
+
+        for landmark in landmarks:
+            cv2.circle(
+                img=image,
+                center=tuple(map(int, landmark)),
+                radius=max(0, int(2.5 * scale_factor)),
+                color=(208, 224, 64),
+                thickness=cv2.FILLED,
+            )

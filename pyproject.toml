@@ -27,7 +27,7 @@ classifiers = [
 ]
 dependencies = [
     "loguru~=0.7.3",
-    "opencv-python~=4.11.0",
+    "opencv-python-headless~=4.11.0",
     "inspireface~=1.1.13",
 ]
 
@@ -48,12 +48,12 @@ extra-dependencies = [
 
 [tool.hatch.envs.types.scripts]
 check = [
-    "mypy --install-types --non-interactive {args:identicore tests}",
-    "pyright {args:identicore tests}",
+    "mypy --install-types --non-interactive {args:identicore tests cmd}",
+    "pyright {args:identicore tests cmd}",
 ]
 format = [
-    "ruff check --exit-zero --fix identicore tests",
-    "ruff format identicore tests stubs",
+    "ruff check --exit-zero --fix identicore tests cmd",
+    "ruff format identicore tests stubs cmd",
 ]
 
 [[tool.mypy.overrides]]
@@ -70,21 +70,29 @@ dependencies = [
 check = "pytest {args:tests}"
 check-cov = "pytest --cov=identicore --cov-report=term-missing {args:tests}"
 
+[tool.hatch.envs.cmd]
+dependencies = [
+    "aiohttp"
+]
+
 [tool.hatch.envs.dev]
 extra-dependencies = [
     "mypy",
     "pyright",
     "ruff",
+]
+dependencies = [
     "pytest",
     "pytest-cov",
+    "aiohttp",
 ]
 
 [tool.hatch.envs.dev.scripts]
 full = [
-    "mypy --install-types --non-interactive {args:identicore tests}",
-    "pyright {args:identicore tests}",
-    "ruff check --exit-zero --fix identicore tests",
-    "ruff format identicore tests stubs",
+    "mypy --install-types --non-interactive {args:identicore tests cmd}",
+    "pyright {args:identicore tests cmd}",
+    "ruff check --exit-zero --fix identicore tests cmd",
+    "ruff format identicore tests stubs cmd",
     "pytest --cov=identicore --cov-report=term-missing {args:tests}",
 ]
 
@@ -118,6 +126,7 @@ pydocstyle = { convention = 'google' }
 "identicore/exceptions.py" = ['D']
 "*/__init__.py" = ['D']
 "tests/*" = ['D']
+"cmd/*" = ['D101', 'D103', 'T']
 
 [tool.ruff.format]
 quote-style = 'single'
@@ -137,6 +146,7 @@ omit = [
 [tool.coverage.paths]
 identicore = ["identicore", "*/identicore/identicore"]
 tests = ["tests", "*/identicore/tests"]
+cmd = ["cmd", "*/identicore/cmd"]
 
 [tool.coverage.report]
 exclude_lines = [

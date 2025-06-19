@@ -12,6 +12,8 @@ from .identicore import IdenticoreSession
 
 if TYPE_CHECKING:
     from .types import (
+        DefaultDrawingOpts,
+        DrawingOpts,
         FaceComparisonResult,
         FaceFeaturesArray,
         ImagePath,
@@ -28,4 +30,6 @@ __all__ = (
     'ImagePath',
     'InspireModel',
     'FaceFeaturesArray',
+    'DefaultDrawingOpts',
+    'DrawingOpts',
 )
