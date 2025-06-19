@@ -21,9 +21,9 @@ from numpy import frombuffer, uint8
 from identicore.identicore import IdenticoreSession
 from identicore.types import DefaultDrawingOpts
 
-THRESHOLD: float = 0.65
+THRESHOLD: float = 0.75
 
-SAMPLES: int = 1000
+SAMPLES: int = 5000
 WORKERS: int = 10
 
 DELAY: float = 0.1
@@ -62,7 +62,10 @@ async def worker(session: aiohttp.ClientSession, queue: Deque[SampleResult], id:
             faces: List[FaceInformation] = identicore_session.face_detection(
                 image=response_image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=0.00
             )
-            assert len(faces) == 1
+            
+            if len(faces) != 1:
+                await asyncio.sleep(delay=DELAY)
+                continue
 
             face: FaceInformation = faces[0]
 
@@ -87,7 +90,7 @@ async def main(_argc: int, _argv: list[str]) -> int:
     sample_size: int = SAMPLES // WORKERS
 
     print('\n .. \x1b[1mcompute-detection-accuracy\x1b[0m')
-    print(f' :: sample_size: {sample_size}, workers_count: {WORKERS}')
+    print(f' :: sample_size: {sample_size}, workers_count: {WORKERS}, threshold: {THRESHOLD}')
 
     queue: Deque[SampleResult] = deque()
     aiohttp_session = aiohttp.ClientSession(
