@@ -3,7 +3,7 @@
 
 ## Installation
 ```shell
-pip install --upgrade git+https://github.com/Em0k1ds-Studio/identicore@dev
+pip install --upgrade git+https://github.com/Em0k1ds-Studio/identicore@main
 ```
 
 ## Usage
