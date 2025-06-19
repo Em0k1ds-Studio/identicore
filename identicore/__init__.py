@@ -1,7 +1,5 @@
 """Identicore: A face recognition and similarity comparison library using InspireFace SDK."""
 
-from typing import TYPE_CHECKING
-
 from .__version__ import __version__
 from .exceptions import (
     FeaturesExtractionFailed,
@@ -10,15 +8,15 @@ from .exceptions import (
 )
 from .identicore import IdenticoreSession
 
-if TYPE_CHECKING:
-    from .types import (
-        DefaultDrawingOpts,
-        DrawingOpts,
-        FaceComparisonResult,
-        FaceFeaturesArray,
-        ImagePath,
-        InspireModel,
-    )
+# if TYPE_CHECKING:
+from .types import (
+    DefaultDrawingOpts,
+    DrawingOpts,
+    FaceComparisonResult,
+    FaceFeaturesArray,
+    ImagePath,
+    InspireModel,
+)
 
 __all__ = (
     '__version__',
