@@ -62,7 +62,7 @@ async def worker(session: aiohttp.ClientSession, queue: Deque[SampleResult], id:
             faces: List[FaceInformation] = identicore_session.face_detection(
                 image=response_image, draw_opts=DefaultDrawingOpts, for_identification=False, threshold=0.00
             )
-            
+
             if len(faces) != 1:
                 await asyncio.sleep(delay=DELAY)
                 continue
